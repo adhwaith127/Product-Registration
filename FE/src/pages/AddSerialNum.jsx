@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import StatusButtons from "../components/StatusButtons";
 import '../styles/AddSerialNum.css';
+import axios from "axios";
 
 export default function AddSerialNum() {
   const [Slno, setSlno] = useState("");
@@ -8,21 +9,35 @@ export default function AddSerialNum() {
 
   const re = /^[0-9]{4}[0-9]{2}(AMP|API)[0-9]{6}B$/;
 
-  const handleAdd = (e) => {
+  const handleAdd = async (e) => {
     e.preventDefault();
+    try{
 
-    if (!Slno.trim()) {
-      window.alert("Please Fill out the field");
-      return;
+      
+      if (!Slno.trim()) {
+        window.alert("Please Fill out the field");
+        return;
+      }
+      
+      if (!re.test(Slno.trim())) {
+        window.alert("The Serial Number is not valid");
+        return;
+      }
+      
+      const data={"serialnumber":Slno}
+
+      const response = await axios.post("http://127.0.0.1:8000/sil/add-serial-number/",data);
+      if (response.data.message=="success"){
+        setSerialList([...serialList, Slno.trim()]);
+      }
+      else{
+        window.alert("Error in adding Serial Number")
+        setSlno("");
+      }
+
+    }catch(err){
+      console.error(err.response.data);
     }
-
-    if (!re.test(Slno.trim())) {
-      window.alert("The Serial Number is not valid");
-      return;
-    }
-
-    setSerialList([...serialList, Slno.trim()]);
-    setSlno("");
   };
 
   return (
