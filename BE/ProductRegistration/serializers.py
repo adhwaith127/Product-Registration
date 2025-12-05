@@ -6,7 +6,7 @@ import re
 class DeviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = Serialdata
-        fields = '__all__'
+        fields = ['serialnumber'] 
 
     def validate_serialnumber(self,value):
         
@@ -14,3 +14,4 @@ class DeviceSerializer(serializers.ModelSerializer):
 
         if not re.fullmatch(pattern=pattern, string=value):
             serializers.ValidationError("Serial number not following pattern")
+        return value
