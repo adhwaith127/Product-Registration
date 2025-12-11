@@ -33,7 +33,7 @@ export default function Sidebar() {
       {/* Sidebar */}
       <aside className={`sidebar ${isOpen ? 'sidebar--open' : ''}`}>
         <div className="sidebar__header">
-          <h2 className="sidebar__title">Welcome</h2>
+          <h2 className="sidebar__title">Softland India Ltd</h2>
         </div>
 
         <nav className="sidebar__nav">
@@ -51,19 +51,7 @@ export default function Sidebar() {
                   Home
                 </NavLink>
               </li>
-              
-              <li className="sidebar__menu-item">
-                <NavLink
-                  to="/dashboard/listing-page"
-                  className={({ isActive }) => 
-                    `sidebar__link ${isActive ? 'sidebar__link--active' : ''}`
-                  }
-                  onClick={closeSidebar}
-                >
-                  Listing Page
-                </NavLink>
-              </li>
-              
+                          
               <li className="sidebar__menu-item">
                 <NavLink
                   to="/dashboard/add-serialnum"
@@ -75,6 +63,19 @@ export default function Sidebar() {
                   Add Serial Numbers
                 </NavLink>
               </li>
+
+              <li className="sidebar__menu-item">
+                <NavLink
+                  to="/dashboard/listing-page"
+                  className={({ isActive }) => 
+                    `sidebar__link ${isActive ? 'sidebar__link--active' : ''}`
+                  }
+                  onClick={closeSidebar}
+                >
+                  Map Devices
+                </NavLink>
+              </li>
+
             </div>
 
             <div className="sidebar__menu-bottom">
