@@ -197,6 +197,23 @@
   color: white;
 }
 
+.serial-table__btn--approved {
+  background-color: #28a745;
+  color: white;
+  cursor: not-allowed;
+}
+
+.serial-table__btn--allocated {
+  background-color: #28a745;
+  color: white;
+  cursor: not-allowed;
+}
+
+.serial-table__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* MOBILE STYLES */
 @media (max-width: 768px) {
   .serial-page {
