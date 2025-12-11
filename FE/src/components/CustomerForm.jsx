@@ -88,7 +88,7 @@ export default function CustomerForm({ initialData, onSubmit, onCancel, isEditMo
           id="serialnumber" 
           name="serialnumber" 
           className="customer-form__input" 
-          value={formData.serialnumber} 
+          value={formData.serialnumber}
           onChange={handleChange} 
           placeholder="e.g. SN-998877" 
           required 

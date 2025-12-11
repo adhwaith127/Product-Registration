@@ -71,7 +71,7 @@ export default function ListingPage() {
 
           {/* HEADER with Add New button */}
           <div className="listing-page__header">
-            <h1 className="listing-page__title">Products</h1>
+            <h1 className="listing-page__title" >Enter Product Details</h1>
             <button 
               className="listing-page__add-btn" 
               onClick={openAddModal}
