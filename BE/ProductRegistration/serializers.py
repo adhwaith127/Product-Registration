@@ -13,5 +13,10 @@ class DeviceSerializer(serializers.ModelSerializer):
         pattern = "^[0-9]{4}[0-9]{2}(AMP|API)[0-9]{6}B$"
 
         if not re.fullmatch(pattern=pattern, string=value):
-            serializers.ValidationError("Serial number not following pattern")
+            raise serializers.ValidationError("Serial number not following pattern")
         return value
+    
+class SerialNumberDetails(serializers.ModelSerializer):
+    class Meta:
+        model = Serialdata
+        fields = ['serialnumber','isapproved','isallocated']
