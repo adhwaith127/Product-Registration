@@ -12,8 +12,13 @@ def get_serial_numbers(request):
     try:
         data=Serialdata.objects.all()
         serialized_data=SerialNumberDetails(data,many=True).data
-        return Response({"message": "Serial numbers retrived successfully","data":serialized_data})
-        
+        sorted_serial_data = sorted(serialized_data, key=lambda x: x.get("createdate") or "")
+
+        for serial_data in sorted_serial_data:
+            serial_data.pop("createdate")
+
+        return Response({"message": "Serial numbers retrived successfully","data":sorted_serial_data})
+
     except Exception as e:
         # Handle unexpected server errors
         return Response({"message": "Server error occurred","error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -36,7 +41,15 @@ def get_unallocated_sl_no(request):
 
             if not serialnumber:        
                 return Response({"status":msg_status,"message": message}, status=status.HTTP_400_BAD_REQUEST)
-            
+
+            try:
+                serial_record=Serialdata.objects.get(serialnumber=serialnumber)
+                serial_record.isallocated = 1
+                serial_record.save()
+
+            except Serialdata.DoesNotExist:
+                return Response({"message": "Invalid Serial Number","error": str(e)}, status=status.HTTP_404_NOT_FOUND)
+
             return Response({"serialnumber":serialnumber,"status":msg_status,"message":message})
 
     # Handle unexpected server errors
@@ -137,7 +150,7 @@ def allocate_serial_number(request):
         if not serialnumber:
             return Response({"message": "Serial number is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        isallocated = 1
+        isallocated = 2
         with connection.cursor() as cursor:
             # IN parameter
             cursor.callproc("update_serial_number_allocate", [serialnumber,isallocated, "", ""])
