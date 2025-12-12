@@ -19,4 +19,4 @@ class DeviceSerializer(serializers.ModelSerializer):
 class SerialNumberDetails(serializers.ModelSerializer):
     class Meta:
         model = Serialdata
-        fields = ['serialnumber','isapproved','isallocated']
+        fields = ['serialnumber','isapproved','isallocated','createdate']
