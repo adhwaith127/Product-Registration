@@ -40,7 +40,7 @@ def get_unallocated_sl_no(request):
             message=cursor.fetchone()[0]
 
             if not serialnumber:        
-                return Response({"status":msg_status,"message": message}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({"status":msg_status,"message": message}, status=status.HTTP_404_NOT_FOUND)
 
             try:
                 serial_record=Serialdata.objects.get(serialnumber=serialnumber)
