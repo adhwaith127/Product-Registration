@@ -40,10 +40,11 @@ export default function AddSerialNum() {
 
   const handleAdd = async (e) => {
     e.preventDefault();
-
+    
     try {
       if (!Slno.trim()) {
         window.alert("Please fill out the field");
+        setSlno("");
         return;
       }
 
