@@ -19,7 +19,7 @@ export default function AddSerialNum() {
     try {
       if (showLoading) setLoading(true);
       
-      const response = await axios.get('http://127.0.0.1:8001/sil/get_serial_numbers/');
+      const response = await axios.get('http://108.181.62.69/BE/sil/get_serial_numbers/');
 
       if (response.data && response.data.data) {
         const formattedData = response.data.data.map(item => ({
@@ -59,7 +59,7 @@ export default function AddSerialNum() {
       }
 
       const data = { serialnumber: Slno.trim() };
-      const response = await axios.post("http://127.0.0.1:8001/sil/add_serial_number/", data);
+      const response = await axios.post("http://108.181.62.69/BE/sil/add_serial_number/", data);
       const { status: responseStatus, message } = response.data;
 
       if (responseStatus === "success") {
@@ -104,7 +104,7 @@ export default function AddSerialNum() {
 
   const handleApprove = async (serialnumber) => {
     try {
-      const response = await axios.patch("http://127.0.0.1:8001/sil/approve_serial_number/", { serialnumber });
+      const response = await axios.patch("http://108.181.62.69/BE/sil/approve_serial_number/", { serialnumber });
       
       if (response.data.status === "success") {
         window.alert("Serial number approved successfully!");
@@ -120,7 +120,7 @@ export default function AddSerialNum() {
 
   const handleAllocate = async (serialnumber) => {
     try {
-      const response = await axios.patch("http://127.0.0.1:8001/sil/allocate_serial_number/", { serialnumber });
+      const response = await axios.patch("http://108.181.62.69/BE/sil/allocate_serial_number/", { serialnumber });
       
       if (response.data.status === "success") {
         window.alert("Serial number allocated successfully!");
@@ -140,7 +140,7 @@ export default function AddSerialNum() {
     }
 
     try {
-      const response = await axios.delete(`http://127.0.0.1:8001/sil/delete_serial_number/${serialnumber}/`);
+      const response = await axios.delete(`http://108.181.62.69/BE/sil/delete_serial_number/${serialnumber}/`);
       
       if (response.data.status === "success") {
         window.alert("Serial number deleted successfully!");
@@ -203,9 +203,19 @@ export default function AddSerialNum() {
                           <button type="button" className={`serial-table__btn serial-table__btn--approve ${item.isapproved === 1 ? 'serial-table__btn--approved' : ''}`} onClick={() => handleApprove(item.serialnumber)} disabled={item.isapproved === 1} aria-label={`Approve serial ${item.serialnumber}`}>
                             <i className="fas fa-check" /> {item.isapproved === 1 ? 'Approved' : 'Approve'}
                           </button>
-                          <button type="button" className={`serial-table__btn serial-table__btn--allocate ${item.isallocated === 1 ? 'serial-table__btn--allocated' : ''}`} onClick={() => handleAllocate(item.serialnumber)} disabled={item.isallocated === 1 || item.isapproved !== 1} aria-label={`Allocate serial ${item.serialnumber}`} title={item.isapproved !== 1 ? "Approve this serial number first" : "Allocate serial number"}>
-                            <i className="fas fa-box" /> {item.isallocated === 1 ? 'Allocated' : 'Allocate'}
-                          </button>
+                          {/* <button type="button" className={`serial-table__btn serial-table__btn--allocate ${item.isallocated === 2 ? 'serial-table__btn--allocated' : ''}`} onClick={() => handleAllocate(item.serialnumber)} disabled aria-label={`Allocate serial ${item.serialnumber}`} title={item.isapproved !== 1 ? "Approve this serial number first" : "Allocate serial number"}>
+                            <i className="fas fa-box" /> {item.isallocated === 2 ? 'Allocated' : 'Allocate'}
+                          </button> */}
+                          {item.isapproved === 1 && (
+                            <button 
+                              type="button" 
+                              className={`serial-table__btn serial-table__btn--allocate ${item.isallocated === 2 ? 'serial-table__btn--allocated' : ''}`} 
+                              onClick={() => handleAllocate(item.serialnumber)}
+                              // disabled={item.isallocated === 2} >
+                              disabled>
+                              <i className="fas fa-box" /> {item.isallocated === 2 ? 'Allocated' : 'Allocate'}
+                            </button>
+                          )}
                           <button type="button" className="serial-table__btn serial-table__btn--delete" onClick={() => handleDelete(item.serialnumber, item.isapproved, item.isallocated)} disabled={item.isapproved === 1 || item.isallocated === 1} aria-label={`Delete serial ${item.serialnumber}`}>
                             <i className="fas fa-trash" /> Delete
                           </button>
