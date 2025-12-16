@@ -3,8 +3,8 @@ from rest_framework import status
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from .serializers import DeviceSerializer,SerialNumberDetails
-from .models import Serialdata, PalmtecUpiDetails
+from .models import Serialdata, Palmteccustomerdetails
+from .serializers import DeviceSerializer,SerialNumberDetails,MappingSerializer
 
 
 @api_view(['GET'])
@@ -42,15 +42,28 @@ def get_unallocated_sl_no(request):
             if not serialnumber:        
                 return Response({"status":msg_status,"message": message}, status=status.HTTP_404_NOT_FOUND)
 
-            try:
-                serial_record=Serialdata.objects.get(serialnumber=serialnumber)
-                serial_record.isallocated = 1
-                serial_record.save()
+            isallocated = 1
 
-            except Serialdata.DoesNotExist:
-                return Response({"message": "Invalid Serial Number","error": str(e)}, status=status.HTTP_404_NOT_FOUND)
+            # IN parameter
+            cursor.callproc("update_serial_number_allocate", [serialnumber,isallocated, "", ""])
 
-            return Response({"serialnumber":serialnumber,"status":msg_status,"message":message})
+            # OUT parameters (index starts from 0 so after 2(0,1) input outputs reside in 2 and 3)
+            cursor.execute("SELECT @_update_serial_number_allocate_2")
+            out_status = cursor.fetchone()[0]
+
+            cursor.execute("SELECT @_update_serial_number_allocate_3")
+            out_message = cursor.fetchone()[0]
+
+            if out_status == 'success':
+                return Response({"serialnumber":serialnumber,"message": out_message,"status": out_status}, status=status.HTTP_200_OK)
+
+            # not known serial number
+            elif out_status == 'not_found':
+                return Response({"message": out_message,"status": out_status}, status=status.HTTP_404_NOT_FOUND)
+
+            # General error
+            else:  # out_status == 'error'
+                return Response({"message": out_message,"status": out_status}, status=status.HTTP_400_BAD_REQUEST)
 
     # Handle unexpected server errors
     except Exception as e:
@@ -72,19 +85,20 @@ def add_serial_number(request):
             return Response({"message": "Validation error","errors": serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
         
         sl_no = serializer.validated_data['serialnumber']
+        category='UPIPLUS'
         
         with connection.cursor() as cursor:
             
             # IN parameter
-            cursor.callproc("save_serial_number", [sl_no, "", ""])
+            cursor.callproc("save_serial_number", [sl_no,category, "", ""])
             
             # OUT parameters
-            cursor.execute("SELECT @_save_serial_number_1")
+            cursor.execute("SELECT @_save_serial_number_2")
             out_status = cursor.fetchone()[0]
             
-            cursor.execute("SELECT @_save_serial_number_2")
+            cursor.execute("SELECT @_save_serial_number_3")
             out_message = cursor.fetchone()[0]
-        
+
         if out_status == 'success':
             return Response({"message": out_message,"status": out_status}, status=status.HTTP_201_CREATED)
         
@@ -140,7 +154,7 @@ def approve_serial_number(request):
 
 
 
-@api_view(['PATCH'])
+@api_view(['POST'])
 def allocate_serial_number(request):
     try:
         if not request.data:
@@ -178,7 +192,167 @@ def allocate_serial_number(request):
         return Response({"message": "Server error occurred","error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
+@api_view(['POST'])
+def add_upi_pro_serial(request):
+    try:
+        if not request.data:
+            return Response({"message": "Missing input data"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        serialnumber=request.data.get('serialnumber')
+        if not serialnumber:
+            return Response({"message": "Serial number is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-@api_view(['DELETE'])
-def delete_serial_number(request):
+        category='UPIPRO'
+        isapproved = 1
+        isallocated = 2
+
+        with connection.cursor() as cursor:
+            cursor.callproc("save_upi_pro_serial_number", [serialnumber,category,isapproved,isallocated, "", ""])
+
+            cursor.execute("SELECT @_save_upi_pro_serial_number_4")
+            out_status = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT @_save_upi_pro_serial_number_5")
+            out_message = cursor.fetchone()[0]
+
+            if out_status == 'success':
+                return Response({"message": out_message,"status": out_status}, status=status.HTTP_201_CREATED)
+            
+            elif out_status == 'duplicate':
+                # Duplicate serial number
+                return Response({"message": out_message,"status": out_status}, status=status.HTTP_409_CONFLICT)
+            
+            else:  # out_status == 'error'
+                # General error from stored procedure
+                return Response({"message": out_message,"status": out_status}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        # Handle unexpected server errors
+        return Response({"message": "Server error occurred","error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+
+
+@api_view(['GET'])
+def get_customer_mappings(request):
+    try:
+        # Get all parameters from request
+        serial_number = request.GET.get('serialNumber', None)
+        customer_code = request.GET.get('customerCode', 0)
+        customer_name = request.GET.get('customerName', '')
+        company = request.GET.get('company', '')  
+        device_type = request.GET.get('deviceType', '')  
+        from_date = request.GET.get('fromDate', '2020-01-01')
+        to_date = request.GET.get('toDate', '2099-12-31')
+        approved_status = request.GET.get('approvedStatus', -1)
+        search_text = request.GET.get('searchText', '')
+        page_number = request.GET.get('pageNumber', 0)
+        page_size = request.GET.get('pageSize', 10)
+        sort_index = request.GET.get('sortingOrderIndex', 1)  
+        sort_direction = request.GET.get('sortingOrderDirection', 0)  
+        
+        args = [
+            serial_number,
+            customer_code,
+            customer_name,
+            company,          
+            device_type,      
+            from_date,
+            to_date,
+            approved_status,
+            search_text,
+            page_number,
+            page_size,
+            sort_index,
+            sort_direction,
+            0
+        ]
+        
+
+        with connection.cursor() as cursor:
+            cursor.callproc('get_serial_customer_details', args)
+            results = cursor.fetchall()
+            
+            # Get total count
+            cursor.execute("SELECT @_get_serial_customer_details_13")
+            total_count = cursor.fetchone()[0]
+        
+        # Format response
+        data = []
+        for row in results:
+            data.append({
+                'upiDeviceSerialNumber': row[0],
+                'uniqueIdentifier': row[1],
+                'customerCode': row[2],
+                'customerName': row[3],
+                'company': row[4],
+                'devicetype': row[5],
+                'isApproved': row[6],
+                'createdOn': row[7],
+                'modifiedOn': row[8],
+                'cLicenseURL': row[9],
+                'versionDetails': row[10]
+            })
+        
+        return Response({'status': 'success','data': data,'totalCount': total_count})
+        
+    except Exception as e:
+        return Response({'status': 'error','message': 'Server error occurred','error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+def create_customer_mapping(request):
+    try:
+        if not request.data:
+            return Response({"message": "Missing input data"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # serialnumber=request.data.get("serialnumber")
+        # uniqueIdentifier=request.data.get("uniqueIdentifier")
+        # customercode=request.data.get("customerCode")
+        # customername=request.data.get("customerName")
+        # company=request.data.get("company")
+        # devicetype=request.data.get("devicetype")
+        # licenseurl=request.data.get("licenseUrl")
+        # versiondetails=request.data.get("versionDetails")
+
+        fieldnames=["serialnumber","uniqueIdentifier","customerCode","customerName","company",
+                "devicetype","licenseUrl","versionDetails"]
+
+        form_data=[]
+        missing_data=[]
+        for fieldname in fieldnames:
+            value = request.data.get(fieldname)
+            if value is None or not str(value).strip():
+                missing_data.append(fieldname)
+            else:
+                form_data.append(value)
+
+        if missing_data:
+            return Response({'status':'error','message':f'Missing values in input,{missing_data}'},status=status.HTTP_400_BAD_REQUEST)
+
+        form_data.extend(["", ""])
+        with connection.cursor() as cursor:
+            cursor.callproc("save_serial_customer_details",form_data)
+
+            cursor.execute("SELECT @_save_serial_customer_details_8")
+            out_status = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT @_save_serial_customer_details_9")
+            out_message = cursor.fetchone()[0]
+
+            if out_status == 'success':
+                return Response({"message": out_message,"status": out_status}, status=status.HTTP_201_CREATED)
+            
+            elif out_status == 'duplicate':
+                # Duplicate serial number
+                return Response({"message": out_message,"status": out_status}, status=status.HTTP_409_CONFLICT)
+
+            # out_status == 'error'
+            else:
+                return Response({"message": out_message,"status": out_status}, status=status.HTTP_400_BAD_REQUEST)
+
+    except Exception as e:
+        return Response({'status': 'error','message': 'Server error occurred','error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+
+@api_view(['POST'])
+def update_customer_mapping(request):
     pass
