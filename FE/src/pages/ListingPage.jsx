@@ -6,6 +6,8 @@ import axios from 'axios'
 
 export default function ListingPage() {
    
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   // Store list of device-customer mappings
   const [mappings, setMappings] = useState([])
   
@@ -75,7 +77,7 @@ export default function ListingPage() {
         sortingOrderDirection: sortConfig.direction
       }
 
-      const response = await axios.get('http://127.0.0.1:8001/sil/get_customer_mappings/', {
+      const response = await axios.get(`${BASE_URL}/get_customer_mappings/`, {
         params: params
       })
 
@@ -196,7 +198,7 @@ export default function ListingPage() {
 
     try {
       const response = await axios.delete(
-        `http://127.0.0.1:8001/sil/delete_customer_mapping/${serialNumber}/`
+        `${BASE_URL}/delete_customer_mapping/${serialNumber}/`
       )
       
       if (response.data.status === 'success') {

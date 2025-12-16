@@ -4,6 +4,8 @@ import axios from 'axios'
 
 export default function CustomerForm({ initialData, onSubmit, onCancel, isEditMode = false }) {
 
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  
   const [formData, setFormData] = useState({
     upiDeviceSerialNumber: '',
     uniqueIdentifier: '',
@@ -22,7 +24,7 @@ export default function CustomerForm({ initialData, onSubmit, onCancel, isEditMo
   useEffect(() => {
     const fetchAvailableSerials = async () => {
       try {
-        const response = await axios.get('http://127.0.0.1:8001/sil/get_serial_numbers/')
+        const response = await axios.get(`${BASE_URL}/get_serial_numbers/`)
         
         if (response.data && response.data.data) {
           // Filter: approved (1) and not allocated (0 or not 2)
@@ -95,8 +97,8 @@ export default function CustomerForm({ initialData, onSubmit, onCancel, isEditMo
     try {
       if (isEditMode) {
 
-        const response = await axios.put(
-          'http://127.0.0.1:8001/sil/update_customer_mapping/', 
+        const response = await axios.post(
+          `${BASE_URL}/update_customer_mapping/`, 
           {
             serialnumber: formData.upiDeviceSerialNumber,
             uniqueIdentifier: formData.uniqueIdentifier,
@@ -124,7 +126,7 @@ export default function CustomerForm({ initialData, onSubmit, onCancel, isEditMo
       } else {
 
         const response = await axios.post(
-          'http://127.0.0.1:8001/sil/create_customer_mapping/',
+          `${BASE_URL}/create_customer_mapping/`,
           {
             serialnumber: formData.upiDeviceSerialNumber,
             uniqueIdentifier: formData.uniqueIdentifier,

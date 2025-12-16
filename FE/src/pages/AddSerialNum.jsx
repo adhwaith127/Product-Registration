@@ -4,6 +4,9 @@ import '../styles/AddSerialNum.css';
 import axios from "axios";
 
 export default function AddSerialNum() {
+  
+  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
   const [Slno, setSlno] = useState("");
   const [serialList, setSerialList] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -20,7 +23,7 @@ export default function AddSerialNum() {
     try {
       if (showLoading) setLoading(true);
       
-      const response = await axios.get('http://127.0.0.1:8001/sil/get_serial_numbers/');
+      const response = await axios.get(`${BASE_URL}/get_serial_numbers/`);
 
       if (response.data && response.data.data) {
 
@@ -66,7 +69,7 @@ export default function AddSerialNum() {
       }
 
       const data = { serialnumber: Slno.trim() };
-      const response = await axios.post("http://127.0.0.1:8001/sil/add_serial_number/", data);
+      const response = await axios.post(`${BASE_URL}/add_serial_number/`, data);
       const { status: responseStatus, message } = response.data;
 
       if (responseStatus === "success") {
@@ -109,11 +112,10 @@ export default function AddSerialNum() {
     }
   };
 
-  // SECTION 3: ACTION HANDLERS
-  // Handle approve, allocate, and delete operations
+
   const handleApprove = async (serialnumber) => {
     try {
-      const response = await axios.patch("http://127.0.0.1:8001/sil/approve_serial_number/", { serialnumber });
+      const response = await axios.patch(`${BASE_URL}/approve_serial_number/`, { serialnumber });
       
       if (response.data.status === "success") {
         window.alert("Serial number approved successfully!");
@@ -129,7 +131,7 @@ export default function AddSerialNum() {
 
   const handleAllocate = async (serialnumber) => {
     try {
-      const response = await axios.post("http://127.0.0.1:8001/sil/allocate_serial_number/", { serialnumber });
+      const response = await axios.post(`${BASE_URL}/allocate_serial_number/`, { serialnumber });
       
       if (response.data.status === "success") {
         window.alert("Serial number allocated successfully!");
@@ -149,7 +151,7 @@ export default function AddSerialNum() {
     }
 
     try {
-      const response = await axios.delete(`http://127.0.0.1:8001/sil/delete_serial_number/${serialnumber}/`);
+      const response = await axios.delete(`${BASE_URL}/delete_serial_number/${serialnumber}/`);
       
       if (response.data.status === "success") {
         window.alert("Serial number deleted successfully!");
