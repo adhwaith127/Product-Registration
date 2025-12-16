@@ -303,15 +303,6 @@ def create_customer_mapping(request):
     try:
         if not request.data:
             return Response({"message": "Missing input data"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # serialnumber=request.data.get("serialnumber")
-        # uniqueIdentifier=request.data.get("uniqueIdentifier")
-        # customercode=request.data.get("customerCode")
-        # customername=request.data.get("customerName")
-        # company=request.data.get("company")
-        # devicetype=request.data.get("devicetype")
-        # licenseurl=request.data.get("licenseUrl")
-        # versiondetails=request.data.get("versionDetails")
 
         fieldnames=["serialnumber","uniqueIdentifier","customerCode","customerName","company",
                 "devicetype","licenseUrl","versionDetails"]
@@ -351,8 +342,73 @@ def create_customer_mapping(request):
 
     except Exception as e:
         return Response({'status': 'error','message': 'Server error occurred','error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
+
 
 @api_view(['POST'])
 def update_customer_mapping(request):
-    pass
+    try:
+        if not request.data:
+            return Response({"message": "Missing input data"}, status=status.HTTP_400_BAD_REQUEST)
+
+        fieldnames = ["serialnumber", "customerCode", "uniqueIdentifier", "customerName", 
+              "company", "devicetype", "cLicenseURL", "versionDetails"]
+
+        form_data=[]
+        missing_data=[]
+        for fieldname in fieldnames:
+            value = request.data.get(fieldname)
+            if value is None or not str(value).strip():
+                missing_data.append(fieldname)
+            else:
+                form_data.append(value)
+
+        if missing_data:
+            return Response({'status':'error','message':f'Missing values in input,{missing_data}'},status=status.HTTP_400_BAD_REQUEST)
+
+        form_data.extend(["", ""])
+        with connection.cursor() as cursor:
+            cursor.callproc("update_customer_by_serial",form_data)
+
+            cursor.execute("SELECT @_update_customer_by_serial_8")
+            out_status = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT @_update_customer_by_serial_9")
+            out_message = cursor.fetchone()[0]
+
+            if out_status == 'success':
+                return Response({"message": out_message,"status": out_status}, status=status.HTTP_200_OK)
+            
+            elif out_status == 'not_found':
+                # serial number not found
+                return Response({"message": out_message,"status": out_status}, status=status.HTTP_404_NOT_FOUND)
+
+            # out_status == 'error'
+            else:
+                return Response({"message": out_message,"status": out_status}, status=status.HTTP_400_BAD_REQUEST)
+
+    except Exception as e:
+        return Response({'status': 'error','message': 'Server error occurred','error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+def get_device_details(request):
+    try:
+        serialnumber=request.GET.get('serialnumber')
+        if not serialnumber:
+            return Response({"message": "Serial number is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        with connection.cursor() as cursor:
+            cursor.callproc("get_device_details_by_serial",[serialnumber,])
+
+            response=cursor.fetchone()
+            if not response:
+                return Response({'status':"error",'statusCode':404,"message": "Device Details Fetch Unsuccessful!","data":{}})
+
+            fieldnames=[field[0]for field in cursor.description]
+
+            result=dict(zip(fieldnames, response))
+
+            return Response({'status':"success",'statusCode':200,"message": "Device Details Fetch Succesfully!","data":result})
+
+    except Exception as e:
+        return Response({'status': 'error','message': 'Server error occurred','error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
