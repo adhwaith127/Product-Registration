@@ -7,4 +7,5 @@ urlpatterns = [
     path('approve_serial_number/', views.approve_serial_number, name="approve_serial_number"),
     path('allocate_serial_number/', views.allocate_serial_number, name="allocate_serial_number"),
     path('getSerialNumber/', views.get_unallocated_sl_no, name="get_unallocated_sl_no"),
+    path('get_customer_mappings/', views.get_customer_mappings, name="get_customer_mappings"),
 ]
