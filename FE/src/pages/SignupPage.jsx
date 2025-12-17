@@ -1,13 +1,39 @@
-import React from "react";
+import React, { useState } from "react";
 import '../styles/SignupPage.css'
-
+import axios from "axios";
+import { togglePassword } from "../assets/js/auth";
+import { useNavigate } from 'react-router-dom';
 
 export default function SignupPage() {
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Handle signup logic here
-    console.log("Signup submitted");
-  };
+
+    const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+
+    const [username,setUsername]=useState('')
+    const [mailid,setMailid]=useState('')
+    const [password,setPassword]=useState('')
+    const [cpassword,setCpassword]=useState('')
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+
+        const trimmedUsername = username.trim();
+        const trimmedMailID = mailid.trim();
+        const trimmedPassword = password.trim();
+        const trimmedCPassword = cpassword.trim();
+
+        if(!trimmedUsername || !trimmedMailID || !trimmedPassword || !trimmedCPassword){
+            window.alert("Please fill out all the fields !!!")
+            return;
+        }
+        if(trimmedPassword !== trimmedCPassword){
+            window.alert("Both passwords are not similar")
+            return;
+        }
+
+        const signup_data={"username":trimmedUsername,"mailid":trimmedMailID,"password":trimmedPassword,"cpassword":trimmedCPassword}
+
+        const response=axios.post(`${BASE_URL}/signup/`,signup_data)
+    };
 
   return (
     <div className="signup-page">
@@ -28,7 +54,9 @@ export default function SignupPage() {
               id="username"
               name="username"
               required
-            />
+              value={username}
+              onChange={(e)=>setUsername(e.target.value)}
+              />
             <span className="signup-form__icon">
               <i className="fas fa-user"></i>
             </span>
@@ -43,7 +71,9 @@ export default function SignupPage() {
               id="email"
               name="email"
               required
-            />
+              value={mailid}
+              onChange={(e)=>setMailid(e.target.value)}
+              />
             <span className="signup-form__icon">
               <i className="fas fa-envelope"></i>
             </span>
@@ -58,8 +88,10 @@ export default function SignupPage() {
               id="password"
               name="password"
               required
-            />
-            <span className="signup-form__icon">
+              value={password}
+              onChange={(e)=>setPassword(e.target.value)}
+              />
+            <span className="signup-form__icon" onClick={()=>togglePassword("password")}>
               <i className="fas fa-lock"></i>
             </span>
           </div>
@@ -73,8 +105,10 @@ export default function SignupPage() {
               id="confirmPassword"
               name="confirmPassword"
               required
+              value={cpassword}
+              onChange={(e)=>setCpassword(e.target.value)}
             />
-            <span className="signup-form__icon">
+            <span className="signup-form__icon" onClick={()=>togglePassword("confirmPassword")}>
               <i className="fas fa-lock"></i>
             </span>
           </div>
