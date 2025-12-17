@@ -62,15 +62,15 @@ export default function ListingPage() {
       
       // Build query parameters
       const params = {
-        serialNumber: filters.serialNumber || null,
-        customerCode: filters.customerCode || null,
-        customerName: filters.customerName || null,
-        company: filters.company || null,
+        serialNumber: filters.serialNumber.trim() || null,
+        customerCode: filters.customerCode.trim() || null,
+        customerName: filters.customerName.trim() || null,
+        company: filters.company.trim() || null,
         deviceType: filters.deviceType || null,
         fromDate: filters.fromDate || '2020-01-01', // Default old date
         toDate: filters.toDate || new Date().toISOString().split('T')[0], // Today
         approvedStatus: filters.approvedStatus === '-1' ? -1 : parseInt(filters.approvedStatus),
-        searchText: filters.searchText || '',
+        searchText: filters.searchText.trim() || '',
         pageNumber: (currentPage - 1) * pageSize, // Convert to offset
         pageSize: pageSize,
         sortingOrderIndex: sortConfig.columnIndex,
