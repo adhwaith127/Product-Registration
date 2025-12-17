@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 export default function SignupPage() {
 
     const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+    const navigate=useNavigate();
 
     const [username,setUsername]=useState('')
     const [mailid,setMailid]=useState('')
@@ -32,7 +33,8 @@ export default function SignupPage() {
 
         const signup_data={"username":trimmedUsername,"mailid":trimmedMailID,"password":trimmedPassword,"cpassword":trimmedCPassword}
 
-        const response=axios.post(`${BASE_URL}/signup/`,signup_data)
+        // const response=axios.post(`${BASE_URL}/signup/`,signup_data)
+        navigate('/login')
     };
 
   return (

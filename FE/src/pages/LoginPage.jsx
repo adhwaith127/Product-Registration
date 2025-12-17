@@ -7,6 +7,7 @@ import {togglePassword} from '../assets/js/auth'
 export default function LoginPage() {
   
   const BASE_URL = import.meta.env.VITE_API_BASE_URL;
+  const navigate=useNavigate();
 
   const [username,setUsername]= useState('');
   const [password,setPassword]= useState('');
@@ -34,7 +35,7 @@ export default function LoginPage() {
   const login_data={"username":trimmedUsername,"password":trimmedPassword}
 
   const response = await axios.post(`${BASE_URL}/login/`,login_data)
-
+  navigate('/dashboard')
   };
 
   return (
