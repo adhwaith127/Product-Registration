@@ -9,8 +9,13 @@ import LoginPage from './pages/LoginPage.jsx'
 import ListingPage from './pages/ListingPage.jsx'
 import Layout from './pages/Layout.jsx' 
 import AddSerialNum from './pages/AddSerialNum.jsx'
+import SignupPage from './pages/SignupPage.jsx'
 
 const router = createBrowserRouter([
+  {
+    path: '/signup',
+    element: <SignupPage />
+  },  
   {
     path: '/login',
     element: <LoginPage />
