@@ -1,11 +1,21 @@
+// src/assets/js/axiosConfig.js
 import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-// Create axios instance with cookies enabled
+// Main API instance
 const api = axios.create({
     baseURL: BASE_URL,
-    withCredentials: true,  // Send cookies with every request
+    withCredentials: true,
+    headers: {
+        'Content-Type': 'application/json',
+    }
+});
+
+// Separate instance for refresh to avoid interceptor loops
+const refreshApi = axios.create({
+    baseURL: BASE_URL,
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json',
     }
@@ -18,22 +28,32 @@ api.interceptors.response.use(
     },
     async (error) => {
         const originalRequest = error.config;
-        
-        // If 401 error and haven't retried yet
+
+        // Don't retry these endpoints to avoid infinite loops
+        if (originalRequest.url?.includes('/token/refresh/') || 
+            originalRequest.url?.includes('/verify-auth/') ||
+            originalRequest.url?.includes('/login/') ||
+            originalRequest.url?.includes('/signup/')) { 
+            return Promise.reject(error);
+        }
+
+        // If 401 and haven't retried yet
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
             
             try {
-                // Try to refresh token (cookies sent automatically)
-                await axios.post(`${BASE_URL}/api/token/refresh/`, {}, {
-                    withCredentials: true
-                });
+                console.log('Access token expired, refreshing...');
+                
+                // Use separate instance to avoid interceptor
+                await refreshApi.post('/token/refresh/');
+                
+                console.log('Token refreshed, retrying request...');
                 
                 // Retry the original request
                 return api(originalRequest);
                 
             } catch (refreshError) {
-                // Refresh failed - redirect to login
+                console.error('Token refresh failed, redirecting to login');
                 window.location.href = '/login';
                 return Promise.reject(refreshError);
             }
