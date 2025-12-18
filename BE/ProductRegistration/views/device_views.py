@@ -1,15 +1,23 @@
 from django.db import connection
 from rest_framework import status
-from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from ..models import Serialdata, Palmteccustomerdetails
-from ..serializers import DeviceSerializer,SerialNumberDetails,MappingSerializer
+from ..models import Serialdata
+from ..serializers import DeviceSerializer,SerialNumberDetails
+from django.contrib.auth import get_user_model
+from .auth_views import get_user_from_cookie
 
 
 
 @api_view(['GET'])
 def get_serial_numbers(request):
+    # Validate user
+    user=get_user_from_cookie(request)
+    if not user:
+        return Response({
+            'error': 'Authentication required'
+        }, status=401)
+
     try:
         data=Serialdata.objects.all()
         serialized_data=SerialNumberDetails(data,many=True).data
@@ -28,6 +36,13 @@ def get_serial_numbers(request):
 
 @api_view(['GET'])
 def get_unallocated_sl_no(request):
+    # Validate user
+    user=get_user_from_cookie(request)
+    if not user:
+        return Response({
+            'error': 'Authentication required'
+        }, status=401)
+    
     try:
         with connection.cursor() as cursor:
             cursor.callproc("get_single_unallocated_approved_serial",["","",""])
@@ -76,6 +91,13 @@ def get_unallocated_sl_no(request):
 
 @api_view(['POST'])
 def add_serial_number(request):
+    # Validate user
+    user=get_user_from_cookie(request)
+    if not user:
+        return Response({
+            'error': 'Authentication required'
+        }, status=401)
+    
     try:
         if not request.data:
             return Response({"message": "Missing input data"}, status=status.HTTP_400_BAD_REQUEST)
@@ -119,6 +141,13 @@ def add_serial_number(request):
 
 @api_view(['PATCH'])
 def approve_serial_number(request):
+    # Validate user
+    user=get_user_from_cookie(request)
+    if not user:
+        return Response({
+            'error': 'Authentication required'
+        }, status=401)
+    
     try:
         if not request.data:
             return Response({"message": "Missing input data"}, status=status.HTTP_400_BAD_REQUEST)
@@ -158,6 +187,13 @@ def approve_serial_number(request):
 
 @api_view(['POST'])
 def allocate_serial_number(request):
+    # Validate user
+    user=get_user_from_cookie(request)
+    if not user:
+        return Response({
+            'error': 'Authentication required'
+        }, status=401)
+    
     try:
         if not request.data:
             return Response({"message": "Missing input data"}, status=status.HTTP_400_BAD_REQUEST)
@@ -196,6 +232,13 @@ def allocate_serial_number(request):
 
 @api_view(['POST'])
 def add_upi_pro_serial(request):
+    # Validate user
+    user=get_user_from_cookie(request)
+    if not user:
+        return Response({
+            'error': 'Authentication required'
+        }, status=401)
+    
     try:
         if not request.data:
             return Response({"message": "Missing input data"}, status=status.HTTP_400_BAD_REQUEST)
@@ -235,6 +278,13 @@ def add_upi_pro_serial(request):
 
 @api_view(['GET'])
 def get_device_details(request):
+    # Validate user
+    user=get_user_from_cookie(request)
+    if not user:
+        return Response({
+            'error': 'Authentication required'
+        }, status=401)
+    
     try:
         serialnumber=request.GET.get('serialnumber')
         if not serialnumber:

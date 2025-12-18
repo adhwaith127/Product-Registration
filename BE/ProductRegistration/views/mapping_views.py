@@ -1,15 +1,19 @@
 from django.db import connection
 from rest_framework import status
-from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
-from ..models import Serialdata, Palmteccustomerdetails
-from ..serializers import DeviceSerializer,SerialNumberDetails,MappingSerializer
-
+from .auth_views import get_user_from_cookie
 
 
 @api_view(['GET'])
 def get_customer_mappings(request):
+    # Validate user
+    user=get_user_from_cookie(request)
+    if not user:
+        return Response({
+            'error': 'Authentication required'
+        }, status=401)
+    
     try:
         # Get all parameters from request
         serial_number = request.GET.get('serialNumber', None)
@@ -77,6 +81,13 @@ def get_customer_mappings(request):
 
 @api_view(['POST'])
 def create_customer_mapping(request):
+    # Validate user
+    user=get_user_from_cookie(request)
+    if not user:
+        return Response({
+            'error': 'Authentication required'
+        }, status=401)
+    
     try:
         if not request.data:
             return Response({"message": "Missing input data"}, status=status.HTTP_400_BAD_REQUEST)
@@ -123,6 +134,13 @@ def create_customer_mapping(request):
 
 @api_view(['POST'])
 def update_customer_mapping(request):
+    # Validate user
+    user=get_user_from_cookie(request)
+    if not user:
+        return Response({
+            'error': 'Authentication required'
+        }, status=401)
+    
     try:
         if not request.data:
             return Response({"message": "Missing input data"}, status=status.HTTP_400_BAD_REQUEST)

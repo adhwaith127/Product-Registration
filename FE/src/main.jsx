@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider,Navigate } from 'react-router-dom'
 
 import './styles/base.css'
 
@@ -10,8 +10,13 @@ import ListingPage from './pages/ListingPage.jsx'
 import Layout from './pages/Layout.jsx' 
 import AddSerialNum from './pages/AddSerialNum.jsx'
 import SignupPage from './pages/SignupPage.jsx'
+import ProtectedRoute from './components/ProtectedRoute';
 
 const router = createBrowserRouter([
+  {
+    path:'/',
+    element:<Navigate to="/login" replace />
+  },
   {
     path: '/signup',
     element: <SignupPage />
@@ -19,22 +24,27 @@ const router = createBrowserRouter([
   {
     path: '/login',
     element: <LoginPage />
-  },  
+  }, 
   {
-    path: '/dashboard',
-    element: <Layout />,             
-    children: [
+    element:<ProtectedRoute/>,
+    children:[
       {
-        path: '',
-        element: <Home />
-      },
-      {
-        path: 'listing-page',
-        element: <ListingPage />
-      },
-      {
-        path: 'add-serialnum',
-        element: <AddSerialNum />
+        path: '/dashboard',
+        element: <Layout />,             
+        children: [
+          {
+            path: '',
+            element: <Home />
+          },
+          {
+            path: 'listing-page',
+            element: <ListingPage />
+          },
+          {
+            path: 'add-serialnum',
+            element: <AddSerialNum />
+          }
+        ]
       }
     ]
   }

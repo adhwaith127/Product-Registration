@@ -3,10 +3,9 @@ import Modal from '../components/Modal.jsx'
 import CustomerForm from '../components/CustomerForm.jsx'
 import '../styles/ListingPage.css'
 import axios from 'axios'
+import api, { BASE_URL } from '../assets/js/axiosConfig';
 
 export default function ListingPage() {
-   
-  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
   // Store list of device-customer mappings
   const [mappings, setMappings] = useState([])
@@ -77,7 +76,7 @@ export default function ListingPage() {
         sortingOrderDirection: sortConfig.direction
       }
 
-      const response = await axios.get(`${BASE_URL}/get_customer_mappings/`, {
+      const response = await api.get(`${BASE_URL}/get_customer_mappings/`, {
         params: params
       })
 
@@ -197,7 +196,7 @@ export default function ListingPage() {
     }
 
     try {
-      const response = await axios.delete(
+      const response = await api.delete(
         `${BASE_URL}/delete_customer_mapping/${serialNumber}/`
       )
       

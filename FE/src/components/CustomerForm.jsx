@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
 import '../styles/CustomerForm.css'
 import axios from 'axios'
+import api, { BASE_URL } from '../assets/js/axiosConfig';
 
 export default function CustomerForm({ initialData, onSubmit, onCancel, isEditMode = false }) {
-
-  const BASE_URL = import.meta.env.VITE_API_BASE_URL;
-  
+ 
   const [formData, setFormData] = useState({
     upiDeviceSerialNumber: '',
     uniqueIdentifier: '',
@@ -24,7 +23,7 @@ export default function CustomerForm({ initialData, onSubmit, onCancel, isEditMo
   useEffect(() => {
     const fetchAvailableSerials = async () => {
       try {
-        const response = await axios.get(`${BASE_URL}/get_serial_numbers/`)
+        const response = await api.get(`${BASE_URL}/get_serial_numbers/`)
         
         if (response.data && response.data.data) {
           // Filter: approved (1) and not allocated (0 or not 2)
@@ -97,7 +96,7 @@ export default function CustomerForm({ initialData, onSubmit, onCancel, isEditMo
     try {
       if (isEditMode) {
 
-        const response = await axios.post(
+        const response = await api.post(
           `${BASE_URL}/update_customer_mapping/`, 
           {
             serialnumber: formData.upiDeviceSerialNumber,
@@ -125,7 +124,7 @@ export default function CustomerForm({ initialData, onSubmit, onCancel, isEditMo
 
       } else {
 
-        const response = await axios.post(
+        const response = await api.post(
           `${BASE_URL}/create_customer_mapping/`,
           {
             serialnumber: formData.upiDeviceSerialNumber,
