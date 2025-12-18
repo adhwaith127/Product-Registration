@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.contrib.auth.models import AbstractUser
 
 class Serialdata(models.Model):
     serialnumber = models.CharField(db_column='serialNumber', primary_key=True, max_length=18)  # Field name made lowercase.
@@ -34,3 +34,11 @@ class Palmteccustomerdetails(models.Model):
     class Meta:
         managed = False
         db_table = 'palmteccustomerdetails'
+
+
+class CustomUser(AbstractUser):
+    role = models.CharField(max_length=32, blank=True, null=True)
+    is_verified = models.BooleanField(default=False)
+    
+    class Meta:
+        db_table = 'custom_user'
