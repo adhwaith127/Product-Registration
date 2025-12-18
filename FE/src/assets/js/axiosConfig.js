@@ -1,4 +1,3 @@
-// src/assets/js/axiosConfig.js
 import axios from 'axios';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL;
@@ -29,7 +28,9 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        // Don't retry these endpoints to avoid infinite loops
+        console.log(`API Error on ${originalRequest.url}:`, error.response?.status);
+        
+        // No need to retry these endpoints
         if (originalRequest.url?.includes('/token/refresh/') || 
             originalRequest.url?.includes('/verify-auth/') ||
             originalRequest.url?.includes('/login/') ||
@@ -54,6 +55,7 @@ api.interceptors.response.use(
                 
             } catch (refreshError) {
                 console.error('Token refresh failed, redirecting to login');
+                localStorage.removeItem('user'); // Clear user data
                 window.location.href = '/login';
                 return Promise.reject(refreshError);
             }
