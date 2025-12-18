@@ -2,7 +2,6 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.contrib.auth import get_user_model,authenticate
-from django.contrib.auth.hashers import make_password
 from rest_framework_simplejwt.tokens import RefreshToken,AccessToken
 from rest_framework_simplejwt.exceptions import TokenError
 
@@ -32,7 +31,6 @@ def signup_view(request):
         return Response({'error': 'Email already exists'}, status=status.HTTP_400_BAD_REQUEST)
     
     try:
-        # hashed_password=make_password(password)
         # password auto hashed by create_user
         user=User.objects.create_user(username=username,email=email,password=password,role=role,is_verified=True)
         return Response({'message': 'Account created successfully.',
@@ -90,7 +88,7 @@ def login_view(request):
             # False for HTTP, True for HTTPS
             secure=False,
             samesite='Lax',
-            max_age=900,            
+            max_age=3600,            
             path='/'
         )
 
@@ -152,16 +150,14 @@ def protected_view(request):
         return Response({'error': 'User not found'}, status=status.HTTP_400_BAD_REQUEST)
     
 
+# Extract and validate access token from cookies
 def get_user_from_cookie(request):
-    """
-    Extract and validate access token from cookies
-    Returns user object or None
-    """
     access_token = request.COOKIES.get('access_token')
     
     if not access_token:
         return None
-    
+
+    # Returns user object or None    
     try:
         token = AccessToken(access_token)
         user_id = token['user_id']
@@ -171,13 +167,10 @@ def get_user_from_cookie(request):
         return None
 
 
+# Generates new access token using refresh token from cookies
 @api_view(['POST'])
 def refresh_token_view(request):
-    """
-    Generates new access token using refresh token from cookies
-    No body required - reads refresh_token from cookies
-    """
-    # Read refresh token from cookies
+    # No body required - reads refresh_token from cookies
     refresh_token = request.COOKIES.get('refresh_token')
     
     if not refresh_token:
