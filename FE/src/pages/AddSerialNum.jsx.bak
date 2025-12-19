@@ -1,0 +1,307 @@
+import React, { useState, useEffect } from "react";
+import '../styles/AddSerialNum.css';
+import api, { BASE_URL } from '../assets/js/axiosConfig';
+
+export default function AddSerialNum() {
+  
+  const [Slno, setSlno] = useState("");
+  const [serialList, setSerialList] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  const re = /^[0-9]{4}[0-9]{2}(AMP|API)[0-9]{6}B$/;
+
+  useEffect(() => {
+    fetchSerialNumbers(true);
+  }, []);
+
+  const fetchSerialNumbers = async (showLoading = true) => {
+    try {
+      if (showLoading) setLoading(true);
+      
+      const response = await api.get(`${BASE_URL}/get_serial_numbers/`);
+
+      if (response.data && response.data.data) {
+        const formattedData = response.data.data.map(item => ({
+          serialnumber: item.serialnumber,
+          isapproved: item.isapproved || 0,
+          // Ensure we handle null/undefined as 0 (Available) and convert strings to numbers
+          isallocated: item.isallocated ? Number(item.isallocated) : 0,
+          IMSI: item.imsi || null,           
+          IMEI: item.imei || null,           
+          deviceId: item.deviceid || null    
+        }));
+        setSerialList(formattedData);
+      }
+    } catch (err) {
+      console.error("Error fetching serial numbers:", err);
+      setError(err);
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  };
+
+  // --- HANDLERS ---
+
+  const handleAdd = async (e) => {
+    e.preventDefault();
+    
+    try {
+      if (!Slno.trim()) {
+        window.alert("Please fill out the field");
+        setSlno("");
+        return;
+      }
+
+      if (!re.test(Slno.trim())) {
+        window.alert("Serial number must follow pattern: YYYYMM{AMP|API}XXXXXXB (e.g., 202505AMP123456B)");
+        return;
+      }
+
+      if (serialList.some(item => item.serialnumber === Slno.trim())) {
+        window.alert("Serial number already exists in the list!");
+        return;
+      }
+
+      const data = { serialnumber: Slno.trim() };
+      const response = await api.post(`${BASE_URL}/add_serial_number/`, data);
+      
+      if (response.data.status === "success") {
+        setSlno("");
+        window.alert("Serial number added successfully!");
+        await fetchSerialNumbers(false);
+      } else {
+        window.alert(response.data.message || "Unknown error occurred");
+      }
+
+    } catch (err) {
+      console.error("Error adding serial number:", err);
+      
+      if (!err.response) {
+        window.alert("Network error! Please check your connection.");
+        return;
+      }
+      
+      const status = err.response.status;
+      const msg = err.response.data.message || "An error occurred";
+      
+      if (status === 400) {
+        window.alert(msg);
+      } else if (status === 409) {
+        window.alert("Serial number already exists");
+      } else {
+        window.alert(`Error: ${msg}`);
+      }
+      
+      setSlno("");
+    }
+  };
+
+  const handleApprove = async (serialnumber) => {
+    try {
+      const response = await api.patch(`${BASE_URL}/approve_serial_number/`, { serialnumber });
+      
+      if (response.data.status === "success") {
+        window.alert("Serial number approved successfully!");
+        await fetchSerialNumbers(false);
+      } else {
+        window.alert("Failed to approve serial number");
+      }
+    } catch (err) {
+      console.error("Error approving serial number:", err);
+      window.alert("Error approving serial number");
+    }
+  };
+
+  const handleAllocate = async (serialnumber) => {
+    try {
+      const response = await api.post(`${BASE_URL}/allocate_serial_number/`, { serialnumber });
+      
+      if (response.data.status === "success") {
+        window.alert("Serial number allocated successfully!");
+        await fetchSerialNumbers(false);
+      } else {
+        window.alert("Failed to allocate serial number");
+      }
+    } catch (err) {
+      console.error("Error allocating serial number:", err);
+      window.alert("Error allocating serial number");
+    }
+  };
+
+  const handleDeactivate = async (serialnumber) => {
+    if (!window.confirm(`Are you sure you want to deactivate device ${serialnumber}?`)) {
+      return;
+    }
+
+    try {
+      const response = await api.post(`${BASE_URL}/deactivate_serial_number/`, { serialnumber });
+      
+      if (response.data.status === "success") {
+        window.alert(response.data.message || "Deactivated successfully");
+        await fetchSerialNumbers(false);
+      } else {
+        window.alert(response.data.message || "Failed to deactivate");
+      }
+    } catch (err) {
+      console.error("Error deactivating serial number:", err);
+      
+      if (err.response) {
+        const { status, data } = err.response;
+        
+        if (status === 403) {
+          window.alert(`Action Denied: ${data.message}`);
+        } else if (status === 404) {
+          window.alert("Serial number not found in database.");
+        } else {
+          window.alert(`Error: ${data.message || "Failed to deactivate"}`);
+        }
+      } else {
+        window.alert("Network error while deactivating.");
+      }
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="serial-page">
+        <div className="loading">Loading serial numbers...</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="serial-page">
+      <header className="serial-page__header">
+        <h1 className="serial-page__title">Add Serial Number</h1>
+      </header>
+
+      <section className="serial-panel">
+        <div className="serial-panel__header">
+          <h3 className="serial-panel__title">New Serial</h3>
+        </div>
+
+        <div className="serial-panel__body">
+          {/* Add Serial Form */}
+          <form className="serial-form" onSubmit={handleAdd}>
+            <div className="serial-form__field">
+              <input 
+                type="text" 
+                className="serial-form__input" 
+                required 
+                value={Slno} 
+                placeholder="Enter Sl.no (e.g., 202505AMP123456B)" 
+                onChange={(e) => setSlno(e.target.value)} 
+                aria-label="Serial number"
+              />
+            </div>
+            <div className="serial-form__actions">
+              <button type="submit" className="serial-form__submit">
+                Add Serial Number
+              </button>
+            </div>
+          </form>
+
+          {/* Serial Numbers Table */}
+          <div className="serial-table-wrapper">
+            <table className="serial-table">
+              <thead className="serial-table__head">
+                <tr className="serial-table__row">
+                  <th className="serial-table__header">#</th>
+                  <th className="serial-table__header">Serial Number</th>
+                  <th className="serial-table__header">IMSI</th>
+                  <th className="serial-table__header">IMEI</th>
+                  <th className="serial-table__header">Device ID</th>
+                  <th className="serial-table__header">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="serial-table__body">
+                {serialList.length === 0 ? (
+                  <tr className="serial-table__row serial-table__row--empty">
+                    <td colSpan="6" className="serial-table__cell">
+                      No serial numbers added yet.
+                    </td>
+                  </tr>
+                ) : (
+                  serialList.map((item, index) => {
+                    // Check if deactivation is allowed
+                    const canDeactivate = item.isapproved === 1 && item.isallocated === 0;
+
+                    return (
+                      <tr key={item.serialnumber} className="serial-table__row">
+                        <td className="serial-table__cell" data-label="#">
+                          {index + 1}
+                        </td>
+                        <td className="serial-table__cell serial-table__cell--serial" data-label="Serial Number">
+                          {item.serialnumber}
+                        </td>
+                        <td className="serial-table__cell serial-table__cell--data" data-label="IMSI">
+                          {item.IMSI || '—'}
+                        </td>
+                        <td className="serial-table__cell serial-table__cell--data" data-label="IMEI">
+                          {item.IMEI || '—'}
+                        </td>
+                        <td className="serial-table__cell serial-table__cell--data" data-label="Device ID">
+                          {item.deviceId || '—'}
+                        </td>
+                        
+                        <td className="serial-table__cell" data-label="Actions">
+                          <div className="serial-table__actions">
+                            
+                            {/* APPROVE BUTTON */}
+                            <button 
+                              type="button" 
+                              className={`serial-table__btn serial-table__btn--approve ${item.isapproved === 1 ? 'serial-table__btn--approved' : ''}`} 
+                              onClick={() => handleApprove(item.serialnumber)} 
+                              disabled={item.isapproved === 1}
+                              aria-label={`Approve serial ${item.serialnumber}`}
+                            >
+                              <i className="fas fa-check" /> {item.isapproved === 1 ? 'Approved' : 'Approve'}
+                            </button>
+
+                            {/* ALLOCATE BUTTON - Only show if approved */}
+                            {item.isapproved === 1 && (
+                              <button 
+                                type="button" 
+                                className={`serial-table__btn serial-table__btn--allocate ${item.isallocated === 2 ? 'serial-table__btn--allocated' : ''}`} 
+                                onClick={() => handleAllocate(item.serialnumber)}
+                                disabled={item.isallocated !== 0}
+                                aria-label={`Allocate serial ${item.serialnumber}`}
+                              >
+                                <i className="fas fa-box" /> 
+                                {item.isallocated === 2 ? 'Allocated' : (item.isallocated === 3 ? 'Deactivated' : 'Allocate')}
+                              </button>
+                            )}
+
+                            {/* DEACTIVATE BUTTON */}
+                            <button 
+                              type="button" 
+                              className={`serial-table__btn ${canDeactivate ? 'serial-table__btn--delete' : 'serial-table__btn--disabled'}`} 
+                              onClick={() => handleDeactivate(item.serialnumber)} 
+                              disabled={!canDeactivate} 
+                              title={!canDeactivate ? "Device must be Approved and Unallocated to deactivate" : "Deactivate Device"}
+                              aria-label={`Deactivate serial ${item.serialnumber}`}
+                            >
+                              <i className="fas fa-ban" /> Deactivate
+                            </button>
+
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="serial-panel__footer">
+          <small className="serial-panel__count">
+            {serialList.length} record{serialList.length !== 1 ? 's' : ''}
+          </small>
+        </div>
+      </section>
+    </div>
+  );
+}
